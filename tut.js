@@ -1,9 +1,22 @@
 const { Sequelize, Op, Model, DataTypes } = require("sequelize");
 const { compose, pipe } = require('./src/util');
+const sqlite3 = require('sqlite3').verbose();
 const Q = require('q');
 const FAIL={ error: 'invalid url' };
 //const database = require('./src/db.js');
 
+
+
+path = Path.Combine(ApplicationData.Current.LocalFolder.Path, databaseName);
+
+if (File.Exists(process.cwd()+'db.sqlite')) { 
+  let db = new sqlite3.Database('db.sqlite', (err) => {
+    if (err) {
+      return console.error(err.message);
+    }
+    console.log('Connected to the in-memory SQlite database.');
+  });
+}
 //const database = new Sequelize({
 //  dialect: 'sqlite',
 //  storage:'./db.sqlite',
