@@ -201,7 +201,7 @@ async function find_or_create(url){
     where:{url:url}});
     //return result;
       //console.log(result[0].dataValues.url,);
-      const data={url:result[0].dataValues.url,id:result[0].dataValues.id};
+      const data={original_url:result[0].dataValues.url,short_url:result[0].dataValues.id};
       //console.log('result: ',result[0].dataValues.url,' ', result[0].dataValues.id);
       console.log('data',data);
       return data;
@@ -224,7 +224,7 @@ async function find(id){
       where:{id:id}});
       //return result;
         //console.log(result[0].dataValues.url,);
-        const data={url:result[0].dataValues.url,id:result[0].dataValues.id};
+        const data={original_url:result[0].dataValues.url,short_url :result[0].dataValues.id};
         //console.log('result: ',result[0].dataValues.url,' ', result[0].dataValues.id);
         //console.log('data',data);
         return data;
