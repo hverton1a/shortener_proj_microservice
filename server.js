@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 const {short_url, unshort_url} = require('./src/api.js');
-const log = require('./src/util.js');
+const {log} = require('./src/util.js');
 
 // Basic Configuration
 const port = process.env.PORT||3030;
