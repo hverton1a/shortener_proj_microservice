@@ -163,20 +163,29 @@ async function create(url){
 //database.close();
 
 function is_http_https(url){
-  if (url.search(reg_http)){
+  const reg_http=/^http[s]*:.+/;
+  if (url.match(reg_http)){
     return true;
   }
   return false;
 }
 
-console.log(is_http_https('ftp:/john-doe.org'));
+
+//const reg_http=/^http[s]*:.+/;
+//console.log(is_http_https('ftp:/john-doe.org'));
+//console.log(('ftp:/john-doe.org').match(reg_http));
+//console.log(is_http_https('https:/john-doe.org'));
+//console.log(('https:/john-doe.org').match(reg_http));
+//console.log(is_http_https('http:/john-doe.org'));
+//console.log(('http:/john-doe.org').match(reg_http));
 
 async function check_url(url){
   console.log('check_url function received: ',url);
-  if (url){
-    var deferred = Q.defer();
-    //const URL = require('URL');
-    const dns = require('dns');
+  var deferred = Q.defer();
+  //const URL = require('URL');
+  const dns = require('dns');
+
+  if (is_http_https(url)){
 
     const dnsOptions={
       family:6,
@@ -198,6 +207,9 @@ async function check_url(url){
             }
       });
       return deferred.promise;
+  }else{
+    deferred.resolve(null);
+    return deferred.promise;
   }
 }
 // criar uma promise semelhante ao dns.lookup usando Q para reservar o retorno de data para composição do JSON
