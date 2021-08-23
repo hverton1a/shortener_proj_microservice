@@ -7,16 +7,16 @@ const FAIL={ error: 'invalid url' };
 
 
 
-path = Path.Combine(ApplicationData.Current.LocalFolder.Path, databaseName);
+//path = Path.Combine(ApplicationData.Current.LocalFolder.Path, databaseName);
 
-if (File.Exists(process.cwd()+'db.sqlite')) { 
-  let db = new sqlite3.Database('db.sqlite', (err) => {
-    if (err) {
-      return console.error(err.message);
-    }
-    console.log('Connected to the in-memory SQlite database.');
-  });
-}
+//if (File.Exists(process.cwd()+'db.sqlite')) { 
+//  let db = new sqlite3.Database('db.sqlite', (err) => {
+//    if (err) {
+//      return console.error(err.message);
+//    }
+//    console.log('Connected to the in-memory SQlite database.');
+//  });
+//}
 //const database = new Sequelize({
 //  dialect: 'sqlite',
 //  storage:'./db.sqlite',
@@ -162,6 +162,15 @@ async function create(url){
 
 //database.close();
 
+function is_http_https(url){
+  if (url.search(reg_http)){
+    return true;
+  }
+  return false;
+}
+
+console.log(is_http_https('ftp:/john-doe.org'));
+
 async function check_url(url){
   console.log('check_url function received: ',url);
   if (url){
@@ -218,63 +227,59 @@ async function find_or_create(url){
 
 async function find(id){
   if(id){
-    try{
-        const result = await Url.findAll({attributes:['url','id'],
+    console.log('input id ',id);
+    var deferred = Q.defer();
+    //try{
+        /*const result = */await Url.findAll({attributes:['url','id'],
         //const result = await Url.findOne({attributes:['url','id'],
-      where:{id:id}});
+      where:{id:id}}).then((result)=>{
       //return result;
-        //console.log(result[0].dataValues.url,);
+        console.log(result[0].dataValues.url);
         const data={original_url:result[0].dataValues.url,short_url :result[0].dataValues.id};
         //console.log('result: ',result[0].dataValues.url,' ', result[0].dataValues.id);
         //console.log('data',data);
-        return data;
-      } catch (error){
-        //console.log('some error in function find: ', result.message, result);
+        return deferred.resolve(data);})
+        .catch((error)=>{console.log('erro no catch ', error); return deferred.resolve(FAIL);});
+      /* } catch (error){
+        console.log('some error in function find try catch : ', result.message, result);
         //console.log('Field: ', result.errors[0].path, ' type:',result.errors[0].type);    
-        //const res = { error: 'invalid url' };
-        return FAIL;
-    }
+        //const res = { error: 'invalid url' };*/
+        return deferred.promise;
+    //}
   }else{
     return FAIL;
   }
 }
 
-async function json_response(url){
-  lookupPromise = check_url(url);
-  lookupPromise.catch()
-                .then((response)=>
-                        {/*console.log(response);
-                            console.log(typeof response);*/
-                            find_or_create(response)
-                            .catch().
-                            then((response)=>console.log(response));
-                          });
-}
-
-function short_url(url){
+async function short_url(url){
   var deferred = Q.defer();
   var lookupPromise = check_url(url);
 
-  lookupPromise.catch()
-                .then((response)=>
+  lookupPromise.catch(response=>console.log(response)).then((response)=>
                         {/*console.log(response);
                             console.log(typeof response);*/
                             find_or_create(response)
-                            .catch().
-                            then((response)=>{deferred.resolve(response);});
+                            .then((response)=>{ deferred.resolve(response);});
                           });
   return deferred.promise;
 
 }
 
-function unshort_url(id){
+async function unshort_url(id){
+  var deferred = Q.defer();
+  var lookupPromise = find(id);
+
+  lookupPromise.catch(response=>console.log(response)).
+  then((response)=>{ deferred.resolve(response);});
+                          
+  return deferred.promise;
   //var deferred = Q.defer();
   //var result = find(id);
   //result.catch().then(res=>console.log(res));
-  return find(id);
+  //find(id).then((result)=>{console.log('unshort ',result);return result;});
 }
 
-unshort_url(1);
+//unshort_url(1);
 
 module.exports={ short_url, unshort_url };
 

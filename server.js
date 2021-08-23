@@ -7,6 +7,7 @@ const {short_url, unshort_url} = require('./tut.js');
 // Basic Configuration
 const port = process.env.PORT||3030;
 
+
 app.use(cors());
 
 app.use('/public', express.static(`${process.cwd()}/public`));
@@ -18,8 +19,8 @@ app.use(
   })
 );
 
-app.get('/', function(req, res) {
-  console.log(req.ip,' ',req.path,' ', Date.now());
+app.get('/', async (req, res) =>{
+  console.log(req.ip,' ',req.path,' ',req.body.url,' ', Date().toString());
   res.sendFile(process.cwd() + '/views/index.html');
 });
 
@@ -28,9 +29,9 @@ app.get('/api/hello', function(req, res) {
   res.json({ greeting: 'hello API' });
 });
 
-app.post('/api/shorturl', function(req, res) {
+app.post('/api/shorturl', async (req, res) =>{
   //find(url) -> se exite retorna json com {original_url:url,short_url:id}
-  //console.log(req.body.url);
+  console.log('post ',req.body.url);
   var short = short_url(req.body.url);
   short.then((response)=>res.json(response));
   //short_url(req.body.url).then((result=>res.json(result)));
@@ -43,12 +44,32 @@ app.post('/api/shorturl', function(req, res) {
   //res.send('Post ');
 });
 
-app.get('/api/shorturl/:SHORT', function(req, res) {
+app.get('/api/shorturl/:SHORT', async (req, res,next) => {
+  //console.log('get ',req.params.SHORT);
   //find(id) -> se exite retorna a url do db em uma nova pagina
-  var send_url = unshort_url(req.params.SHORT);
-  send_url.catch().then((response)=>{console.log(response.url);res.redirect(response.url);});
-  //console.log(req.params.URL);
+  //var send_url = await unshort_url(req.params.SHORT);
+  //console.log('send_url ',send_url);
+  //send_url.then((response)=>{console.log('send_url ',send_url,' ','response.url',' ',response.url);res.redirect(response.url);});
 
+  //await unshort_url(req.params.SHORT).then((response)=>{console.log('send_url ',send_url,' ','response.url',' ',response.url);res.redirect(response.url);});
+ 
+  console.log('get ',req.params.SHORT);
+  var unshort = unshort_url(req.params.SHORT);
+  unshort.catch((error,response)=>{console.log(error); res.json(response);})
+  .then((response)=>{
+    //console.log(response);
+    //console.log(response.original_url);
+    //console.log(response.short_url);
+   // try{
+    //if(response.original_url){
+      console.log('unshort ',unshort,' ','response.SHORT',' ',response.original_url);
+        res.redirect(response.original_url);
+  //}else{console.log(error, ' ', response);res.json(response);}//}catch(error){console.log(error, ' ', response);res.json(response);}
+});
+
+
+
+  //console.log(req.params.URL);
   //res.redirect('https://www.google.com');
 });
 
