@@ -1,77 +1,32 @@
 const Q = require('q');
-const FAIL={ error: 'invalid url' };
-
 const Url = require('../models/models');
 
-
-function getHostname(url){
-  const regex=/^http[s]*:\/\/(?:www.)*(.+)\/?/gmi;
-  let result = (regex.exec(url)[1].split('/'));
-  return result[0];
-}
-
-function checkInputUrl (hostname){
-
-  const dns = require('dns');
-
-  const options = {
-    family:6,
-    hints: dns.ADDRCONFIG | dns.V4MAPPED,
-    value: ''
-  };
-
-  let result=false;
-
-  return dns.lookup(hostname,
-              options,
-              (err, address, family,value) =>{
-                            value = address.toString();
-                            return value;
-                });
-}
-
-async function create(url){
-  try{
-      const result = await Url.create({url:url});
-  } catch (result){
-      console.log('error: ', result.message);
-      console.log('Field: ', result.errors[0].path, ' type:',result.errors[0].type);
-  }
-}
+const FAIL={ error: 'invalid url' };
 
 
 function is_http_https(url){
-  const reg_http=/^http[s]*:.+/;
-  if (url.match(reg_http)){
-    return true;
-  }
+  if (url.match(/^http[s]*:.+/)){  return true;  }
+
   return false;
 }
 
 
 async function check_url(url){
-  console.log('check_url function received: ',url);
-  var deferred = Q.defer();
   const dns = require('dns');
+  var deferred = Q.defer();
 
   if (is_http_https(url)){
-
-    const dnsOptions={
-      family:6,
-      hints: dns.ADDRCONFIG | dns.V4MAPPED,
-    };
-
-    newUrl=new URL(url);
-     dns.lookup(newUrl.hostname,
-          (err, address, family)=>{
-            
+    //newUrl=new URL(url);
+     dns.lookup(new URL(url).hostname,
+          (err, address, family)=>{            
             if (err){
-              return deferred.resolve(null);
+              deferred.resolve(null);
+              //return deferred.resolve(null);
             }else{
-              return deferred.resolve(url);
+               deferred.resolve(url);
+              //return deferred.resolve(url);
             }
       });
-      //return deferred.promise;
   }else{
     deferred.resolve(null);
   }
@@ -79,43 +34,49 @@ async function check_url(url){
 }
 
 async function find_or_create(url){
+  let result = FAIL;
+
   if (url){
     try{
-        const result = await Url.findOrCreate({attributes:['url','id'],
+        const query = await Url.findOrCreate({attributes:['url','id'],
                         where:{url:url}});
-        return ({original_url:result[0].dataValues.url,short_url:result[0].dataValues.id});
-      } catch (result){
-        return FAIL ;
+        result = {original_url:query[0].dataValues.url,short_url:query[0].dataValues.id};
+      } catch (query){
+        //return FAIL ;
+        console.log(query);
     }
-  }else{
-    return FAIL;
   }
+    return result;
+  
 }
 
 async function find(id){
+  let result=FAIL;
+
   if(id){
     var deferred = Q.defer();
     await Url.findAll({attributes:['url','id'],
-      where:{id:id}}).then((result)=>{
-        const data={original_url:result[0].dataValues.url,short_url :result[0].dataValues.id};
-        return deferred.resolve(data);})
-        .catch((error)=>{console.log('erro no catch ', error); return deferred.resolve(FAIL);});
+                        where:{id:id}})
+              .then((query)=>{
+                const data={original_url:query[0].dataValues.url,short_url:query[0].dataValues.id};
+                //return deferred.resolve(data);})
+                deferred.resolve(data);})
+              .catch((error)=>{console.log('erro no catch ', error); /*return deferred.resolve(FAIL);*/ deferred.resolve(FAIL);});
 
-        return deferred.promise;
-
-  }else{
-    return FAIL;
+              result = deferred.promise;
   }
+
+    return result;
+
 }
 
 async function short_url(url){
   var deferred = Q.defer();
   var lookupPromise = check_url(url);
 
-  lookupPromise.catch(response=>console.log(response)).then((response)=>
-                        {
-                            find_or_create(response)
-                            .then((response)=>{ deferred.resolve(response);});
+  lookupPromise.catch(response=>console.log(response))
+                  .then((response)=>{
+                        find_or_create(response).then((response)=>{ deferred.resolve(response);});
                           });
   return deferred.promise;
 
